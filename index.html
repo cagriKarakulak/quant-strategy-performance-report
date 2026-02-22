@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strategy Backtest Dashboard</title>
+  <meta name="description" content="Comprehensive backtest results of an algorithmic trading strategy." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 179, 237, 0.12), transparent);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media(max-width:900px) {
+      .overview-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media(max-width:600px) {
+      .overview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .highlight-box {
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.25rem;
+      background: rgba(56, 189, 248, 0.05);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 1rem;
+    }
+
+    .highlight-box p {
+      font-size: 0.83rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .highlight-box strong {
+      color: var(--text-primary);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media(max-width:768px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .nav-mobile-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.7rem;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    @media(max-width:900px) {
+      .nav-mobile-btn {
+        display: flex;
+        align-items: center;
+      }
+
+      #navLinks {
+        display: none;
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: rgba(8, 12, 20, 0.98);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem;
+        gap: 0.5rem;
+        flex-direction: column;
+        backdrop-filter: blur(20px);
+      }
+
+      #navLinks.open {
+        display: flex;
+      }
+
+      #navLinks a {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ═══ NAVIGATION ═══ -->
+  <nav>
+    <a href="#hero" class="nav-brand">
+      <div class="nav-logo">▲</div>
+      <div>
+        <div class="nav-title">Backtest Dashboard</div>
+        <div class="nav-subtitle">2019 – 2026 · 4H</div>
+      </div>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#overview" class="active">Overview</a></li>
+      <li><a href="#equity">Equity</a></li>
+      <li><a href="#performance">Performance</a></li>
+      <li><a href="#montecarlo">Monte Carlo</a></li>
+      <li><a href="#trades">Trades</a></li>
+    </ul>
+
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div class="nav-badge"><span>COMPLETED</span></div>
+      <button class="nav-mobile-btn" id="mobileMenuBtn">☰</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ═══ HERO ═══ -->
+    <section id="hero" class="hero">
+      <div>
+        <div class="hero-tag">📊 Algorithmic Strategy · 2019 – 2026</div>
+        <h1>Trading Strategy<br />Backtest Results</h1>
+        <p>
+          Full backtest of a <strong>proprietary algorithmic strategy</strong> with dynamic risk management over a
+          6-year period, starting from <strong>$1,000</strong>.
+        </p>
+        <div class="hero-cta">
+          <a href="#equity" class="btn btn-primary">▶ View Equity Curve</a>
+          <a href="#performance" class="btn btn-secondary">📈 Full Metrics</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-value" id="heroFinalEquity" data-value="19502223856.88" data-prefix="$">—</span>
+            <span class="hero-stat-label">Final Equity</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value" id="heroCAGR" data-value="1459.44" data-suffix="%">—</span>
+            <span class="hero-stat-label">CAGR</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value" id="heroSharpe" data-value="2.75">—</span>
+            <span class="hero-stat-label">Sharpe Ratio</span>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-value" id="heroTrades" data-value="2156">—</span>
+            <span class="hero-stat-label">Total Trades</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ═══ OVERVIEW ═══ -->
+    <section id="overview" class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <div class="section-tag">Strategy</div>
+          <h2>Performance Overview</h2>
+          <p>Key results and test parameters at a glance</p>
+        </div>
+
+        <div class="overview-grid" style="margin-bottom:2rem;">
+          <div class="card fade-up">
+            <div class="card-title"><span>🗓️</span> Test Period</div>
+            <div class="highlight-box">
+              <p><strong>2019 – 2026</strong> · 2,232 days of historical data</p>
+            </div>
+            <div class="highlight-box">
+              <p>Both long and short trades · Dynamic position sizing · Realistic commission and funding fees included
+              </p>
+            </div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-title"><span>⚙️</span> Configuration</div>
+            <div class="trade-grid" style="grid-template-columns:1fr 1fr;">
+              <div class="trade-stat">
+                <div class="trade-stat-label">Timeframe</div>
+                <div class="trade-stat-value" style="color:var(--accent)">4H</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Leverage</div>
+                <div class="trade-stat-value" style="color:var(--accent)">5×</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Initial Capital</div>
+                <div class="trade-stat-value">$1,000</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Commission</div>
+                <div class="trade-stat-value">0.08%</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Direction</div>
+                <div class="trade-stat-value">L &amp; S</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Market</div>
+                <div class="trade-stat-value">Futures</div>
+              </div>
+            </div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-title"><span>📡</span> Data Coverage</div>
+            <div style="margin-top:0.5rem;">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Test Duration</span><span>2,232 days</span></div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill blue" data-width="100"></div>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Time in Market</span><span>87.6%</span></div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill green" data-width="87.6"></div>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Win Rate</span><span>38.0%</span></div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill blue" data-width="38"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card fade-up">
+            <div class="metric-icon green">💰</div>
+            <div class="metric-info">
+              <div class="metric-label">Total Return</div>
+              <div class="metric-value green" data-value="1950222285.69" data-suffix="%">—</div>
+              <div class="metric-sub">vs Market: +1,582%</div>
+            </div>
+          </div>
+          <div class="metric-card fade-up">
+            <div class="metric-icon blue">📊</div>
+            <div class="metric-info">
+              <div class="metric-label">CAGR</div>
+              <div class="metric-value blue" data-value="1459.44" data-suffix="%">—</div>
+              <div class="metric-sub">Compounded annual growth</div>
+            </div>
+          </div>
+          <div class="metric-card fade-up">
+            <div class="metric-icon red">📉</div>
+            <div class="metric-info">
+              <div class="metric-label">Max Drawdown</div>
+              <div class="metric-value red">-65.52%</div>
+              <div class="metric-sub">Deepest peak-to-trough</div>
+            </div>
+          </div>
+          <div class="metric-card fade-up">
+            <div class="metric-icon yellow">⚡</div>
+            <div class="metric-info">
+              <div class="metric-label">Sharpe Ratio</div>
+              <div class="metric-value yellow" data-value="2.75">—</div>
+              <div class="metric-sub">Risk-adjusted return (Rf=0)</div>
+            </div>
+          </div>
+          <div class="metric-card fade-up">
+            <div class="metric-icon purple">🎯</div>
+            <div class="metric-info">
+              <div class="metric-label">Profit Factor</div>
+              <div class="metric-value purple" data-value="1.82">—</div>
+              <div class="metric-sub">Gross profit / Gross loss</div>
+            </div>
+          </div>
+          <div class="metric-card fade-up">
+            <div class="metric-icon green">✅</div>
+            <div class="metric-info">
+              <div class="metric-label">Calmar Ratio</div>
+              <div class="metric-value green" data-value="22.27">—</div>
+              <div class="metric-sub">CAGR / Max Drawdown</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ═══ EQUITY ═══ -->
+    <section id="equity" class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <div class="section-tag">Charts</div>
+          <h2>Equity Curve</h2>
+          <p>Portfolio value over time vs. passive market benchmark (logarithmic scale)</p>
+        </div>
+
+        <div class="chart-wrap fade-up">
+          <div class="chart-header">
+            <div>
+              <h3>Portfolio Growth — $1,000 → $19.5B</h3>
+              <p>Logarithmic scale · 4H bars · 2019–2026</p>
+            </div>
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#38bdf8"></div>Strategy
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#475569"></div>Market Benchmark
+              </div>
+            </div>
+          </div>
+          <div style="height:380px;"><canvas id="equityChart"></canvas></div>
+        </div>
+
+        <div class="chart-wrap fade-up">
+          <div class="chart-header">
+            <div>
+              <h3>Underwater Drawdown Chart</h3>
+              <p>Max drawdown: -65.52% · Average: -9.64% · Longest: 165 days</p>
+            </div>
+          </div>
+          <div style="height:210px;"><canvas id="drawdownChart"></canvas></div>
+        </div>
+
+        <div class="two-col">
+          <div class="card fade-up">
+            <div class="card-title"><span>📉</span> Drawdown Breakdown</div>
+            <div style="display:flex;flex-direction:column;gap:0.85rem;margin-top:0.5rem;">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Max Drawdown</span><span style="color:var(--red)">-65.52%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill red" data-width="65.52"></div>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Average Drawdown</span><span>-9.64%</span></div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill gold" data-width="9.64"></div>
+                </div>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label"><span>Max DD Duration</span><span>165 days</span></div>
+                <div class="progress-bar">
+                  <div class="progress-bar-fill blue" data-width="74"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card fade-up">
+            <div class="card-title"><span>⚡</span> Extreme Events</div>
+            <div style="display:flex;gap:2rem;margin-top:0.5rem;flex-wrap:wrap;">
+              <div>
+                <div class="metric-label">Best Single Day</div>
+                <div class="metric-value green">+73.99%</div>
+                <div class="metric-sub">Jul 13, 2023</div>
+              </div>
+              <div>
+                <div class="metric-label">Worst Single Day</div>
+                <div class="metric-value red">-24.77%</div>
+                <div class="metric-sub">Dec 02, 2025</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ═══ PERFORMANCE ═══ -->
+    <section id="performance" class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <div class="section-tag">Performance</div>
+          <h2>Yearly Breakdown &amp; Monthly Heatmap</h2>
+          <p>Granular returns analysis by year and month</p>
+        </div>
+
+        <div class="chart-wrap fade-up">
+          <div class="chart-header">
+            <div>
+              <h3>Annual Returns vs. Max Drawdown</h3>
+              <p>Green = annual return % · Red = max drawdown % that year</p>
+            </div>
+          </div>
+          <div style="height:290px;"><canvas id="yearlyChart"></canvas></div>
+        </div>
+
+        <div class="card fade-up" style="margin-bottom:1.5rem;overflow-x:auto;">
+          <div class="card-title"><span>📅</span> Year-by-Year Performance</div>
+          <table class="yearly-table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Return %</th>
+                <th>Max DD %</th>
+                <th>End Equity</th>
+              </tr>
+            </thead>
+            <tbody id="yearlyTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card fade-up">
+          <div class="card-title"><span>🌡️</span> Monthly Returns Heatmap (%)</div>
+          <div class="heatmap-grid" id="heatmapContainer">
+            <p style="color:var(--text-muted);font-size:0.85rem;">Loading…</p>
+          </div>
+        </div>
+
+        <!-- Risk metrics -->
+        <div style="margin-top:2.5rem;">
+          <div class="section-header fade-up" style="margin-bottom:1.5rem;">
+            <div class="section-tag">Risk</div>
+            <h2>Risk Metrics</h2>
+            <p>Quantitative risk-adjusted performance measures</p>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-card fade-up">
+              <div class="metric-icon blue">📐</div>
+              <div class="metric-info">
+                <div class="metric-label">Annual Volatility</div>
+                <div class="metric-value blue">130.25%</div>
+              </div>
+            </div>
+            <div class="metric-card fade-up">
+              <div class="metric-icon yellow">🎲</div>
+              <div class="metric-info">
+                <div class="metric-label">Sortino Ratio</div>
+                <div class="metric-value yellow" data-value="15.96">—</div>
+                <div class="metric-sub">Downside risk-adjusted</div>
+              </div>
+            </div>
+            <div class="metric-card fade-up">
+              <div class="metric-icon green">🏔️</div>
+              <div class="metric-info">
+                <div class="metric-label">Calmar Ratio</div>
+                <div class="metric-value green" data-value="22.27">—</div>
+                <div class="metric-sub">CAGR / Max DD</div>
+              </div>
+            </div>
+            <div class="metric-card fade-up">
+              <div class="metric-icon purple">🔀</div>
+              <div class="metric-info">
+                <div class="metric-label">Skewness</div>
+                <div class="metric-value purple">+1.48</div>
+                <div class="metric-sub">Positive tail bias</div>
+              </div>
+            </div>
+            <div class="metric-card fade-up">
+              <div class="metric-icon red">⚠️</div>
+              <div class="metric-info">
+                <div class="metric-label">Daily VaR (95%)</div>
+                <div class="metric-value red">-8.76%</div>
+              </div>
+            </div>
+            <div class="metric-card fade-up">
+              <div class="metric-icon yellow">↔️</div>
+              <div class="metric-info">
+                <div class="metric-label">Tail Ratio</div>
+                <div class="metric-value yellow">1.25</div>
+                <div class="metric-sub">Right tail / Left tail</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ═══ MONTE CARLO ═══ -->
+    <section id="montecarlo" class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <div class="section-tag">Simulation</div>
+          <h2>Monte Carlo Stress Test</h2>
+          <p>2,000 bootstrap simulations to assess strategy robustness</p>
+        </div>
+
+        <div class="risk-banner fade-up">
+          <div class="risk-icon">🛡️</div>
+          <div class="risk-text">
+            <h4>Risk of Ruin: 0.00%</h4>
+            <p>Across 2,000 simulations, equity never dropped below 10% of starting capital — the strategy is
+              statistically robust.</p>
+          </div>
+        </div>
+
+        <div class="risk-banner warning fade-up">
+          <div class="risk-icon">⚠️</div>
+          <div class="risk-text">
+            <h4>High Volatility Expected</h4>
+            <p>100% of simulations encounter a &gt;20% drawdown — strong position management is essential.</p>
+          </div>
+        </div>
+
+        <div class="mc-grid fade-up">
+          <div class="mc-card">
+            <div class="mc-value" data-value="18773310152.66" data-prefix="$">—</div>
+            <div class="mc-label">Median Outcome</div>
+          </div>
+          <div class="mc-card">
+            <div class="mc-value" data-value="75119431.51" data-prefix="$">—</div>
+            <div class="mc-label">Worst Case (99th pct)</div>
+          </div>
+          <div class="mc-card">
+            <div class="mc-value" data-value="1334473215015.31" data-prefix="$">—</div>
+            <div class="mc-label">Best Case (95th pct)</div>
+          </div>
+        </div>
+
+        <div class="chart-wrap fade-up">
+          <div class="chart-header">
+            <div>
+              <h3>Equity Projection Fan — Percentile Bands</h3>
+              <p>Shaded area = 5%–95% simulation range · Dashed = actual result</p>
+            </div>
+          </div>
+          <div style="height:330px;"><canvas id="mcChart"></canvas></div>
+        </div>
+
+        <div class="card fade-up">
+          <div class="card-title"><span>📊</span> Probability of Adverse Events</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-label"><span>Chance of &gt;20% Drawdown at any point</span><span
+                style="color:var(--yellow)">100.0%</span></div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill gold" data-width="100"></div>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-label"><span>Chance of &gt;50% Drawdown at any point</span><span
+                style="color:var(--red)">11.8%</span></div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill red" data-width="11.8"></div>
+            </div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-label"><span>Risk of Ruin (&lt;10% of equity remaining)</span><span
+                style="color:var(--green)">0.00%</span></div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill green" data-width="0.01"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ═══ TRADES ═══ -->
+    <section id="trades" class="section">
+      <div class="container">
+        <div class="section-header fade-up">
+          <div class="section-tag">Trade Analysis</div>
+          <h2>Trade Statistics</h2>
+          <p>Detailed breakdown of all 2,156 executed trades</p>
+        </div>
+
+        <div class="two-col" style="margin-bottom:1.5rem;">
+          <div class="card fade-up">
+            <div class="card-title"><span>🏆</span> Edge &amp; Quality</div>
+            <div style="display:flex;flex-direction:column;gap:1rem;">
+              <div>
+                <div class="metric-label">Win Rate</div>
+                <div class="metric-value blue">38.03%</div>
+                <div class="metric-sub">Low win-rate, high reward — classic trend-following profile</div>
+                <div class="progress-bar" style="margin-top:0.5rem;">
+                  <div class="progress-bar-fill blue" data-width="38.03"></div>
+                </div>
+              </div>
+              <div>
+                <div class="metric-label">Payoff Ratio (Avg Win / Avg Loss)</div>
+                <div class="metric-value green">2.96×</div>
+                <div class="metric-sub">Winners are nearly 3× the size of losers</div>
+              </div>
+              <div>
+                <div class="metric-label">SQN — System Quality Number</div>
+                <div class="metric-value yellow">3.06</div>
+                <div class="metric-sub">&gt;3.0 = "Excellent" system quality</div>
+              </div>
+              <div>
+                <div class="metric-label">Kelly Criterion</div>
+                <div class="metric-value purple">17%</div>
+                <div class="metric-sub">Mathematically optimal bet fraction</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card fade-up">
+            <div class="card-title"><span>📈</span> Trade Distribution</div>
+            <div class="trade-grid" style="grid-template-columns:1fr 1fr;">
+              <div class="trade-stat">
+                <div class="trade-stat-label">Total Trades</div>
+                <div class="trade-stat-value" style="color:var(--accent)" data-value="2156">—</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Profit Factor</div>
+                <div class="trade-stat-value" style="color:var(--green)">1.82</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Max Win Streak</div>
+                <div class="trade-stat-value" style="color:var(--green)">9</div>
+              </div>
+              <div class="trade-stat">
+                <div class="trade-stat-label">Max Loss Streak</div>
+                <div class="trade-stat-value" style="color:var(--red)">19</div>
+              </div>
+            </div>
+
+            <!-- vs Benchmark table -->
+            <div style="margin-top:1.25rem;">
+              <div
+                style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;">
+                Strategy vs. Market Benchmark</div>
+              <table class="yearly-table" style="font-size:0.8rem;">
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Strategy</th>
+                    <th>Benchmark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Final Equity</td>
+                    <td class="positive">$19.50B</td>
+                    <td>$16,818</td>
+                  </tr>
+                  <tr>
+                    <td>Total Return</td>
+                    <td class="positive">+1.95B%</td>
+                    <td>+1,582%</td>
+                  </tr>
+                  <tr>
+                    <td>Time in Market</td>
+                    <td>87.6%</td>
+                    <td>100%</td>
+                  </tr>
+                  <tr>
+                    <td>CAGR</td>
+                    <td class="positive">1,459%</td>
+                    <td>—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="footer-grid">
+      <span>Period: 2019-12-31 → 2026-02-10</span>
+      <span>Timeframe: 4H · Leverage: 5×</span>
+      <span>Initial Capital: $1,000</span>
+    </div>
+    <p style="color:#374151;font-size:0.72rem;margin-top:0.5rem;">
+      ⚠ Past performance does not guarantee future results. This information is for research purposes only.
+    </p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="charts.js"></script>
+</body>
+
+</html>
